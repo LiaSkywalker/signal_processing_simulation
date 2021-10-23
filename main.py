@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def show_fft(array: np.ndarray):
     frequency = fft(array)
-    plt.plot(np.abs(frequency)[:frequency.shape[0]]//2)
+    plt.plot(np.abs(frequency)[:frequency.shape[0]//2])
     plt.show()
 
 
@@ -20,7 +20,7 @@ def show_stft(array: np.ndarray, fs: float):
 
 
 def simulate_tx(array: np.ndarray):
-    return array + np.random.normal(0, (array.max() - array.min())/100, array.size)
+    return array + np.random.normal(0, (array.max() - array.min())/50, array.size)
 
 
 def simulate_rx(array: np.ndarray):
@@ -28,7 +28,7 @@ def simulate_rx(array: np.ndarray):
 
 
 if __name__ == '__main__':
-    T = 1
+    T = 1e-1
     dt = 1e-3
     w = 100
     t = np.arange(0, T, dt)
