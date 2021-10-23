@@ -48,4 +48,4 @@ if __name__ == '__main__':
     plt.title("receive signal")
     plt.show()
     show_fft(rx)
-    print("hi")
+    print("small change")
