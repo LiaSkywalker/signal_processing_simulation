@@ -13,7 +13,13 @@ system = nidaqmx.system.System.local()
 device = system.devices[1] if system.devices else None
 
 
-def take_metuments(signal: np.ndarray, sampling_rate: float):
+def turn_off_led():
+    with nidaqmx.Task() as tx:
+        tx.ao_channels.add_ao_voltage_chan(device.name + "/ao0")
+        tx.write(0, True)
+
+
+def take_measurements(signal: np.ndarray, sampling_rate: float):
     t = signal.size / sampling_rate
     with nidaqmx.Task() as rx, nidaqmx.Task() as tx, nidaqmx.Task() as clock:
         rx.ai_channels.add_ai_current_chan(device.name + "/ai0")
@@ -31,7 +37,7 @@ def take_metuments(signal: np.ndarray, sampling_rate: float):
         while time() - start_time < t:
             vals.append(rx.read())
         tx.stop()
-        tx.write(0, True)
+        tx.write([0, 0, 0], True)
         tx.stop()
         # print(f"{rx.read()=}")
         # for s in signal+7:
@@ -45,9 +51,9 @@ def distance(x1):
     rate = 10000
     x0 = 20
     dis = x1 - x0
-    filename = f"distance/distance" + dis
+    filename = f"distance/distance{dis}"
     sig = np.sin(w * np.linspace(0, T, T * rate) * 2 * np.pi) / 2
-    values = take_metuments(sig, rate)
+    values = take_measurements(sig, rate)
     plt.plot(values)
     plt.show()
     with open(filename, "wb+") as f:
@@ -63,7 +69,7 @@ def noise():
     # dis = x1 - x0
     filename = f"noise_cover_photo_diode.pickle"
     sig = np.sin(w * np.linspace(0, T, T * rate) * 2 * np.pi) / 2
-    values = take_metuments(sig, rate)
+    values = take_measurements(sig, rate)
     plt.plot(values)
     plt.show()
     with open(filename, "wb+") as f:
@@ -72,7 +78,8 @@ def noise():
 
 def song(filename, output_name="out.wav"):
     sample_rate, data = wavfile.read(filename)
-    values = take_metuments(data[0], sample_rate)
+    data = data[:, 0] / (2 ** 16)
+    values = take_measurements(data[0:10 * sample_rate], sample_rate)
     wavfile.write(output_name, sample_rate, values)
 
 
@@ -98,8 +105,9 @@ def song(filename, output_name="out.wav"):
 #     song.export(f, format="mp3", bitrate="320k")
 
 if __name__ == "__main__":
-    # song("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
-    sample_rate, data = wavfile.read("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
+    # distance(564654654)
+    song("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
+    # sample_rate, data = wavfile.read("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
 
     # for dev in system.devices:
     #     print(f"{dev.name=}")
