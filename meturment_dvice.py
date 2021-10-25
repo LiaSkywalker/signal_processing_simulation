@@ -32,13 +32,14 @@ def take_measurements(signal: np.ndarray, sampling_rate: float):
         tx.stop()
         tx.write(signal + 3)
         # vals = [rx.read() for _ in range(100)]
-        vals = []
-        start_time = time()
-        tx.start()
-        while time() - start_time < t:
-            vals.append(rx.read())
-        tx.stop()
-        tx.write([0, 0, 0], True)
+        # vals = []
+        # start_time = time()
+        # tx.start()
+        # while time() - start_time < t:
+        #     vals.append(rx.read())
+        # tx.stop()
+        # tx.write([0, 0, 0], True)
+        vals = rx.read(signal.size)
         tx.stop()
         # print(f"{rx.read()=}")
         # for s in signal+7:
