@@ -8,9 +8,10 @@ from time import time
 import matplotlib.pyplot as plt
 import pickle
 from scipy.io import wavfile
+import sounddevice as sd
 
 system = nidaqmx.system.System.local()
-device = system.devices[1] if system.devices else None
+device = system.devices[0] if system.devices else None
 
 
 def turn_off_led():
@@ -78,9 +79,28 @@ def noise():
 
 def song(filename, output_name="out.wav"):
     sample_rate, data = wavfile.read(filename)
-    data = data[:, 0] / (2 ** 16)
-    values = take_measurements(data[0:10 * sample_rate], sample_rate)
+    data = np.array(data[:, 0] / (2 ** 15 - 1))
+    sliced_data = data[0:10 * sample_rate]
+    values = take_measurements(sliced_data, sample_rate)
+    values = np.array(values)
+    values -= np.average(values)
+    values *= (2**15 - 1)/max(values.max(), -values.min())
+    values = values.round().astype("int16")
+    print(f"{values.size=}\n{sample_rate=}")
     wavfile.write(output_name, sample_rate, values)
+
+
+def play_song(filename, chunk_size=1000):
+    sample_rate, data = wavfile.read(filename)
+    data = np.array(data[:, 0] / (2 ** 15 - 1))
+    for chunk in (data[pos:pos+chunk_size] for pos in range(0,data.size,chunk_size)):
+        values = take_measurements(chunk, sample_rate)
+        values = np.array(values)
+        values -= np.average(values)
+        values *= (2**15 - 1)/max(values.max(), -values.min())
+        values = values.round().astype("int16")
+        sd.play(values, sample_rate)
+
 
 
 # def read(f, normalized=False):
@@ -105,6 +125,7 @@ def song(filename, output_name="out.wav"):
 #     song.export(f, format="mp3", bitrate="320k")
 
 if __name__ == "__main__":
+    pass
     # distance(564654654)
     song("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
     # sample_rate, data = wavfile.read("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
