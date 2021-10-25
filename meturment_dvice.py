@@ -22,28 +22,16 @@ def turn_off_led():
 
 def take_measurements(signal: np.ndarray, sampling_rate: float):
     t = signal.size / sampling_rate
-    with nidaqmx.Task() as rx, nidaqmx.Task() as tx, nidaqmx.Task() as clock:
+    with nidaqmx.Task() as rx, nidaqmx.Task() as tx:
         rx.ai_channels.add_ai_current_chan(device.name + "/ai0")
         rx.timing.cfg_samp_clk_timing(sampling_rate, sample_mode=AcquisitionType.CONTINUOUS)
         tx.ao_channels.add_ao_voltage_chan(device.name + "/ao0")
         tx.timing.cfg_samp_clk_timing(sampling_rate, sample_mode=AcquisitionType.CONTINUOUS)
-        # clock.di_channels.add_di_chan(device.name+"/port0")
-        # clock.timing.cfg_samp_clk_timing(sumpeling_rate, sample_mode=AcquisitionType.CONTINUOUS)
         tx.stop()
         tx.write(signal + 3)
-        # vals = [rx.read() for _ in range(100)]
-        # vals = []
-        # start_time = time()
-        # tx.start()
-        # while time() - start_time < t:
-        #     vals.append(rx.read())
-        # tx.stop()
-        # tx.write([0, 0, 0], True)
-        vals = rx.read(signal.size)
+        tx.start()
+        vals = np.array(rx.read(signal.size))
         tx.stop()
-        # print(f"{rx.read()=}")
-        # for s in signal+7:
-        #     tx.write(s)
     return vals
 
 
