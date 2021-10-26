@@ -3,20 +3,22 @@ from scipy.signal import stft
 import numpy as np
 import matplotlib.pyplot as plt
 
-TOTAL_TIME = 1e-1
-DT = 1e-3
-OMEGA = 100
 
-
-def show_fft(array: np.ndarray):
+def show_fft(array: np.ndarray, duration: int = 1):
     """
     shows the fft of given function
     :param array:
+    :param duration:
     :return:
     """
-    frequency = fft(array)
-    plt.plot(np.abs(frequency)[:frequency.shape[0] // 2])
+    transform = fft(array)
+    abs_transform = np.abs(transform[:transform.size // 2])
+    frequencies = np.linspace(0, abs_transform.size / duration, abs_transform.size)
+    # frequencies = np.linspace(0, abs_transform.size * 2 * np.pi / duration, abs_transform.size)
+    plt.plot(frequencies, abs_transform)
+    plt.yscale("log")
     plt.show()
+    return frequencies, abs_transform
 
 
 def show_stft(array: np.ndarray, fs: float):
@@ -87,6 +89,9 @@ def simulate_rx(array: np.ndarray):
 
 
 if __name__ == '__main__':
+    TOTAL_TIME = 1e-1
+    DT = 1e-3
+    OMEGA = 100
     duration = np.arange(0, TOTAL_TIME, DT)
     sin_func = np.sin(OMEGA * 2 * np.pi * duration)
     sin_frequency = fft(sin_func)
