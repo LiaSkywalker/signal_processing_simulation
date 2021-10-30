@@ -1,18 +1,14 @@
 import nidaqmx
 import nidaqmx.system
-from nidaqmx.stream_readers import CounterReader
-from nidaqmx.constants import (AcquisitionType, CountDirection, Edge,
-                               READ_ALL_AVAILABLE, TaskMode, TriggerType)
+from nidaqmx.constants import AcquisitionType
 import numpy as np
-from time import time
+from time import time, sleep
 import matplotlib.pyplot as plt
 import pickle
 from scipy.io import wavfile
+import sounddevice as sd
+from simulation import simulate_rx, simulate_tx
 
-#finding the connections of instruments
-system = nidaqmx.system.System.local()
-#select device
-device = system.devices[1] if system.devices else None
 
 def turn_off_led():
     """
@@ -31,7 +27,10 @@ def take_measurements(signal: np.ndarray, sampling_rate: float,offset=3.):
     :param sampling_rate:
     :return:
     """
-    duration = signal.size / sampling_rate
+    if device not in system.devices:
+        vals = simulate_rx(simulate_tx(signal))
+        sleep(signal.size / sampling_rate)
+        return vals
     with nidaqmx.Task() as rx, nidaqmx.Task() as tx, nidaqmx.Task() as clock:
 
         # analog input channel
@@ -41,20 +40,14 @@ def take_measurements(signal: np.ndarray, sampling_rate: float,offset=3.):
         # analog output channel
         tx.ao_channels.add_ao_voltage_chan(device.name + "/ao0")
         tx.timing.cfg_samp_clk_timing(sampling_rate, sample_mode=AcquisitionType.CONTINUOUS)
-
-        #clock channel?
-        # clock.di_channels.add_di_chan(device.name+"/port0")
-        # clock.timing.cfg_samp_clk_timing(sumpeling_rate, sample_mode=AcquisitionType.CONTINUOUS)
         tx.stop() # make sure tx stopped
         tx.write(signal + offset) #write output signal
 
         #read data from rx
-        vals = rx.read(signal.size)
+        tx.start()
+        vals = np.array(rx.read(signal.size))
         tx.stop()
-
-        tx.write([0, 0, 0], True) # turn off diode
-        tx.stop()
-
+    turn_off_led()
     return vals
 
 
@@ -82,51 +75,52 @@ def distance(x1):
 
 def noise():
     w = 570
-    T = 5
+    duration = 5
     rate = 10000
-    # x0 = 20
-    # dis = x1 - x0
     filename = f"noise_cover_photo_diode.pickle"
-    sig = np.sin(w * np.linspace(0, T, T * rate) * 2 * np.pi) / 2
+    sig = np.sin(w * np.linspace(0, duration, duration * rate) * 2 * np.pi) / 2
     values = take_measurements(sig, rate)
     plt.plot(values)
     plt.show()
     with open(filename, "wb+") as f:
-        pickle.dump({"signal": sig, "received": values, "interval": T, "rate": rate,
+        pickle.dump({"signal": sig, "received": values, "interval": duration, "rate": rate,
                      "time": time(), "fileName": filename}, f)
 
 
-def song(filename, output_name="out.wav"): #todo
+def song(filename, output_name="out.wav"):
     sample_rate, data = wavfile.read(filename)
-    data = data[:, 0] / (2 ** 16)
-    values = take_measurements(data[0:10 * sample_rate], sample_rate)
+    data = np.array(data[:, 0] / (2 ** 15 - 1))
+    sliced_data = data[0:10 * sample_rate]
+    values = take_measurements(sliced_data, sample_rate)
+    values -= np.average(values)
+    values *= (2 ** 15 - 1) / max(values.max(), -values.min())
+    values = values.round().astype("int16")
+    print(f"{values.size=}\n{sample_rate=}")
     wavfile.write(output_name, sample_rate, values)
 
 
-# def read(f, normalized=False):
-#     """MP3 to numpy array"""
-#     a = pydub.AudioSegment.from_mp3(f)
-#     y = np.array(a.get_array_of_samples())
-#     if a.channels == 2:
-#         y = y.reshape((-1, 2))
-#     if normalized:
-#         return a.frame_rate, np.float32(y) / 2**15
-#     else:
-#         return a.frame_rate, y
-#
-# def write(f, sr, x, normalized=False):
-#     """numpy array to MP3"""
-#     channels = 2 if (x.ndim == 2 and x.shape[1] == 2) else 1
-#     if normalized:  # normalized array - each item should be a float in [-1, 1)
-#         y = np.int16(x * 2 ** 15)
-#     else:
-#         y = np.int16(x)
-#     song = AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
-#     song.export(f, format="mp3", bitrate="320k")
+def play_song(filename):
+    sample_rate, data = wavfile.read(filename)
+    chunk_size = sample_rate // 1000
+    data = np.array(data[:, 0] / (2 ** 15 - 1))
+    pos_range = iter(range(0, data.size, chunk_size))
 
-if __name__ == "__main__":
-    # distance(564654654)
-    song("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
-    # sample_rate, data = wavfile.read("Cat Ievan Polkka (320 kbps).wav", "cat320out.wav")
-    # for dev in system.devices:
-    #     print(f"{dev.name=}")
+    def callback(outdata: np.ndarray, frames: int, time, status) -> None:
+        pos = next(pos_range)
+        chunk = data[pos:pos + chunk_size + 1]
+        values = take_measurements(chunk, sample_rate * 1.5)
+        values -= np.average(values)
+        outdata[:, 0] = values
+
+    with sd.OutputStream(sample_rate, chunk_size, channels=1, dtype="float32", callback=callback):
+        sd.sleep(1000 * data.size // sample_rate)
+
+
+# finding the connections of instruments
+system = nidaqmx.system.System.local()
+for dev in system.devices:
+    print(dev)
+
+# select device
+# device = system.devices["a"]
+device = system.devices[input("write the device name to use: ")]
