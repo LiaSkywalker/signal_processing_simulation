@@ -74,20 +74,26 @@ def test(dist, amp):
         return res
 
     #test on generated data
-    # xdata = np.linspace(1, 4, 50)
-    # y = xdata**-2#OnePartsTSquared(xdata, 1, 0, 0)
-    # rng = np.random.default_rng(2)
-    # y_noise = 0.2 * rng.normal(size=xdata.size)
-    # ydata = y + y_noise
-    # plt.plot(xdata, y)
-    # plt.plot(xdata, ydata, 'b-', label='data')
+    xdata = np.linspace(1, 4, 50)
+    y = xdata**-2#OnePartsTSquared(xdata, 1, 0, 0)
+    rng = np.random.default_rng(2)
+    y_noise = 0.2 * rng.normal(size=xdata.size)
+    ydata = y + y_noise
+    plt.plot(xdata, y)
+    plt.plot(xdata, ydata, 'b-', label='data')
 
-    # popt, pcov = curve_fit(OnePartsTSquared, xdata, ydata)
-    # plt.plot(xdata, OnePartsTSquared(xdata, *popt))
-    # print("test on generated data:")
-    # print(pcov)
-    # print(f"a: {popt[0]}, b: {popt[1]}, c: {popt[2]}")
-    # plt.show()
+    popt, pcov = curve_fit(OnePartsTSquared, xdata, ydata)
+    plt.plot(xdata, OnePartsTSquared(xdata, *popt))
+    print("test on generated data:")
+    print(pcov)
+    print(f"a: {popt[0]}, b: {popt[1]}, c: {popt[2]}")
+    plt.show()
+
+def distFitting(dist, amp):
+    def OnePartsTSquared(t, a, b, c):
+        # t = t[t + b != 0]
+        res = a * (1 / ((t + b) ** 2)) + c
+        return res
 
     #curve fit on my data
     ax: plt.Axes = plt.axes()
@@ -95,16 +101,11 @@ def test(dist, amp):
     popt1, pcov1 = curve_fit(OnePartsTSquared, dist, amp, check_finite=False)
     x_fit = np.linspace(min(dist), max(dist), len(dist)*10)
     plt.plot(x_fit, OnePartsTSquared(x_fit, *popt1))
-    ax.yaxis.set_major_formatter(LogFormatterMathtext(subs='all'))
+    ax.yaxis.set_major_formatter(LogFormatterMathtext(minor_thresholds=(np.inf, np.inf)))
     print("real data:")
     print(pcov1)
     print(f"a: {popt1[0]}, b: {popt1[1]}, c: {popt1[2]}")
     plt.show()
-
-    # popt, pcov = curve_fit(func, xdata, ydata, bounds=(0, [3., 1., 0.5]))
-    # plt.plot(xdata, func(xdata, *popt), 'g--',
-    #          label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-##
 
 
 if __name__ == '__main__':
@@ -120,4 +121,4 @@ if __name__ == '__main__':
     # np.savetxt('amp.txt', amp)  # x,y,z equal sized 1D arrays
     # np.savetxt('dist.txt', dist)  # x,y,z equal sized 1D arrays
     # demoFunction(dist,amp)
-    test(dist, amp)
+    distFitting(dist, amp)
