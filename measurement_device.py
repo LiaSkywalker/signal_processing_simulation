@@ -45,7 +45,7 @@ def take_measurements(signal: np.ndarray, sampling_rate: float,offset=3.):
 
         #read data from rx
         tx.start()
-        vals = np.array(rx.read(signal.size))
+        vals = np.array(rx.read(signal.size, 300))
         tx.stop()
     turn_off_led()
     return vals
@@ -107,8 +107,8 @@ def play_song(filename):
 
     def callback(outdata: np.ndarray, frames: int, time, status) -> None:
         pos = next(pos_range)
-        chunk = data[pos:pos + chunk_size + 1]
-        values = take_measurements(chunk, sample_rate * 1.1)
+        chunk = data[pos:pos + chunk_size+1]
+        values = take_measurements(chunk, sample_rate * 2)
         values -= np.average(values)
         outdata[:, 0] = values
 
