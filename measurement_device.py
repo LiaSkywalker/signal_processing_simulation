@@ -108,7 +108,7 @@ def play_song(filename):
     def callback(outdata: np.ndarray, frames: int, time, status) -> None:
         pos = next(pos_range)
         chunk = data[pos:pos + chunk_size + 1]
-        values = take_measurements(chunk, sample_rate * 1.5)
+        values = take_measurements(chunk, sample_rate * 1.1)
         values -= np.average(values)
         outdata[:, 0] = values
 
