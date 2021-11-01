@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-from matplotlib.ticker import LogFormatter, FormatStrFormatter, LogFormatterMathtext
+from matplotlib.ticker import LogFormatter, FormatStrFormatter, LogFormatterMathtext, FuncFormatter
 from scipy.io import wavfile
 from scipy.optimize import curve_fit
 
@@ -101,7 +101,9 @@ def distFitting(dist, amp):
     popt1, pcov1 = curve_fit(OnePartsTSquared, dist, amp, check_finite=False)
     x_fit = np.linspace(min(dist), max(dist), len(dist)*10)
     plt.plot(x_fit, OnePartsTSquared(x_fit, *popt1))
-    ax.yaxis.set_major_formatter(LogFormatterMathtext(minor_thresholds=(np.inf, np.inf)))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: str(x*1000)))
+    plt.ylabel("amplitude[m] 10^-3")
+    # plt.yscale("symlog", linthresh=max(amp)*2)
     print("real data:")
     print(pcov1)
     print(f"a: {popt1[0]}, b: {popt1[1]}, c: {popt1[2]}")
