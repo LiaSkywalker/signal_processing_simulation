@@ -58,7 +58,7 @@ def distance(x1):
     x0 = 20 # initial location of diode on axis
     dis = x1 - x0 #
     offset = 3
-    filename = f"distance/distance{dis}.pickle" #output filename
+    filename = f"measurments/distance/distance{dis}.pickle"  #output filename
     signal = np.sin(w * np.linspace(0, TimeInterval, TimeInterval * rate) * 2 * np.pi) / 2
     values = take_measurements(signal, rate, offset)
 
