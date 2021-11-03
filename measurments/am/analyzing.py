@@ -72,7 +72,7 @@ def get_graphs(filename):
 
     plt.figure(name_base + "AM frequency domain zoom")
     plt.plot(freq[idx[0]:idx[1]], zoom_abs)
-    plt.vlines(measurement["carrier freq"], zoom_abs.min(), zoom_abs.max(), colors="k")
+    plt.axvline(measurement["carrier freq"], color="k")
     plt.title("AM frequency domain zoom")
     plt.xlabel(r"frequency $\left[Hz\right]$")
     plt.ylabel(r"magnitude")
