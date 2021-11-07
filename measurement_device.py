@@ -70,7 +70,7 @@ def distance(x1):
     #save data to file
     with open(filename, "wb+") as f:
         pickle.dump({"offset_voltage": offset, "signal": signal, "received": values, "interval": TimeInterval,
-                     "rate": rate, "time": time(), "distance": dis}, f)
+                     "rate": rate, "time": time(), "distance": dis, "filename": filename}, f)
 
 
 def noise():
@@ -88,11 +88,11 @@ def noise():
 
 
 def song(filename, output_name="out.wav"):
-    sample_rate, data = wavfile.read(filename)
-    data = np.array(data[:, 0] / (2 ** 15 - 1))
-    sliced_data = data[0:10 * sample_rate]
-    values = take_measurements(sliced_data, sample_rate)
-    values -= np.average(values)
+    sample_rate, data = wavfile.read(filename) #read song data
+    data = np.array(data[:, 0] / (2 ** 15 - 1)) #normalize the data
+    sliced_data = data[0:10 * sample_rate] #slice the data
+    values = take_measurements(sliced_data, sample_rate) #transmit and receive
+    values -= np.average(values) #avrage for move the offset
     values *= (2 ** 15 - 1) / max(values.max(), -values.min())
     values = values.round().astype("int16")
     print(f"{values.size=}\n{sample_rate=}")
@@ -115,12 +115,12 @@ def play_song(filename):
     with sd.OutputStream(sample_rate, chunk_size, channels=1, dtype="float32", callback=callback):
         sd.sleep(1000 * data.size // sample_rate)
 
+if __name__ == '__main__':
+    # finding the connections of instruments
+    system = nidaqmx.system.System.local()
+    for dev in system.devices:
+        print(dev)
 
-# finding the connections of instruments
-system = nidaqmx.system.System.local()
-for dev in system.devices:
-    print(dev)
-
-# select device
-# device = system.devices["a"]
-device = system.devices[input("write the device name to use: ")]
+    # select device
+    # device = system.devices["a"]
+    device = system.devices[input("write the device name to use: ")]
