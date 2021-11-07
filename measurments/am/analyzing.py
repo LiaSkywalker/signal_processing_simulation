@@ -20,21 +20,21 @@ def get_graphs(filename):
     rate = measurement["rate"]
     measurement["time line"] *= 1000  # convert to milliseconds
 
-    plt.figure(name_base + "original signal")
+    plt.figure(name_base + " original signal")
     plt.title("original signal")
     plt.xlabel("time [ms]")
     plt.plot(measurement["time line"], measurement["signal"])
-    plt.savefig(name_base + "original signal.svg")
+    plt.savefig(name_base + " original signal.svg")
     # plt.show()
 
     rx = measurement["received"]
 
-    plt.figure(name_base + "received signal")
+    plt.figure(name_base + " received signal")
     plt.title("received signal")
     plt.xlabel("time [ms]")
     plt.plot(measurement["time line"], rx)
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
-    plt.savefig(name_base + "received signal.svg")
+    # plt.savefig(name_base + " received signal.svg")
     # plt.show()
 
     rx = rx[round(rx.size * 0.6):]
@@ -46,7 +46,7 @@ def get_graphs(filename):
     plt.xlabel("time [ms]")
     plt.plot(time_line, rx)
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
-    plt.savefig(name_base + "received signal sliced.svg")
+    plt.savefig(name_base + " received signal sliced.svg")
     # plt.show()
 
     plt.figure(name_base + "received signal zoom")
@@ -54,7 +54,7 @@ def get_graphs(filename):
     plt.xlabel("time [ms]")
     plt.plot(time_line[:round(rate * 2 / measurement["data freq"])], rx[:round(rate * 2 / measurement["data freq"])])
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
-    plt.savefig(name_base + "received signal zoom.svg")
+    # plt.savefig(name_base + " received signal zoom.svg")
     # plt.show()
 
     rx_fft = fft.fftshift(fft.fft(rx))
@@ -64,7 +64,8 @@ def get_graphs(filename):
     plt.title("AM frequency domain")
     plt.xlabel(r"frequency $\left[Hz\right]$")
     plt.ylabel(r"magnitude")
-    plt.savefig(name_base + "AM frequency domain.svg")
+    plt.yscale("log")
+    plt.savefig(name_base + " AM frequency domain.svg")
     # plt.show()
 
     idx = np.digitize([measurement["carrier freq"] + i * measurement["data freq"] for i in [-2, 2]], freq) - 1
@@ -76,7 +77,8 @@ def get_graphs(filename):
     plt.title("AM frequency domain zoom")
     plt.xlabel(r"frequency $\left[Hz\right]$")
     plt.ylabel(r"magnitude")
-    plt.savefig(name_base + "AM frequency domain zoom.svg")
+    plt.yscale("log")
+    plt.savefig(name_base + " AM frequency domain zoom.svg")
     # plt.show()
 
     data = demodulate_am(2 * rx / (rx.max() - rx.min()), rate, measurement["carrier freq"],
@@ -87,7 +89,7 @@ def get_graphs(filename):
     plt.xlabel("time [ms]")
     plt.plot(time_line, data)
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
-    plt.savefig(name_base + "demodulated data.svg")
+    plt.savefig(name_base + " demodulated data.svg")
     # plt.show()
 
     plt.figure(name_base + "demodulated data zoom")
@@ -95,7 +97,7 @@ def get_graphs(filename):
     plt.xlabel("time [ms]")
     plt.plot(time_line[:round(rate / measurement["data freq"])], data[:round(rate / measurement["data freq"])])
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
-    plt.savefig(name_base + "demodulated data zoom.svg")
+    # plt.savefig(name_base + " demodulated data zoom.svg")
     # plt.show()
 
 
