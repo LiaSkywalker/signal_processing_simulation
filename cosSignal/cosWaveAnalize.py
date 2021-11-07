@@ -35,6 +35,7 @@ def plotData(obj):
         plt.plot(original_signal[6000:6300])
         # plt.ylabel("signal")
         # plt.title("original cos signal")
+        plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
         plt.savefig("cos_original.svg", bbox_inches='tight')
         plt.show()
 
@@ -49,6 +50,8 @@ def plotData(obj):
         plt.title("received signal fft")
         plt.xlabel("frequency[Hz]")
         plt.ylabel("magnitude")
+        plt.yscale("log")
+        # plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
         plt.savefig("fft_received_cos.svg", bbox_inches='tight')
         plt.show()
 
@@ -56,6 +59,8 @@ def plotData(obj):
         plt.title("received signal fft")
         plt.xlabel("frequency[Hz]")
         plt.ylabel("magnitude")
+        plt.yscale("log")
+        # plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useMathText=True)
         plt.savefig("fft_received_cos_zomm_in.svg", bbox_inches='tight')
         plt.show()
 
