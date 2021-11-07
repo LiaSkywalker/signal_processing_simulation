@@ -22,6 +22,7 @@ def drawAllMeasurements(objectsLst):
 
     plt.xlabel("Sec")
     plt.ylabel("Amplitude")
+    plt.savefig("distanceAllMeasures.svg", bbox_inches='tight')
     plt.show()
     # plt.savefig(f"distanceAllMeasures.jpg")
 
@@ -38,6 +39,8 @@ def analizeDistEffect(objectsLst):
     plt.xlabel("distance [CM]")
     plt.ylabel("Amplitude [V]")
     plt.show()
+    # np.savetxt('amp.txt', amp)  # x,y,z equal sized 1D arrays
+    # np.savetxt('dist.txt', dist)  # x,y,z equal sized 1D arrays
     return dist, amp
 
 
@@ -52,20 +55,14 @@ def openNoisePickle():
     minValue = np.min(objData)
     amp = ((max(objData) - min(objData)) / 2)  # amplitude
 
-    plt.plot(objData)
-    plt.plot(np.repeat(maxValue, len(objData)))
-    plt.plot(np.repeat(minValue, len(objData)))
-    ampVec = np.repeat(amp, len(objData))
-    plt.plot(ampVec)
+    plt.plot(objData[1000:2000])
+    plt.plot(np.repeat(maxValue, len(objData[1000:2000])))
+    plt.plot(np.repeat(minValue, len(objData[1000:2000])))
+    ampVec = np.repeat(amp, len(objData[1000:2000]))
+    # plt.plot(ampVec)
+    plt.savefig("noise.svg", bbox_inches='tight')
     plt.show()
-
-    return amp
-
-
-##    def OnePartsTSquared1(t: float, a, b, c):
-        # if t != 0:
-            # res = a * (1 / ((t + b) ** 2)) + c
-            # return res
+    return minValue, maxValue, amp
 
 def test(dist, amp):
     def OnePartsTSquared(t, a, b, c):
@@ -89,38 +86,43 @@ def test(dist, amp):
     print(f"a: {popt[0]}, b: {popt[1]}, c: {popt[2]}")
     plt.show()
 
-def distFitting(dist, amp):
+def distFitting(dist, amp, noiseMinValue, noiseMaxValue, noiseAmp):
     def OnePartsTSquared(t, a, b, c):
         # t = t[t + b != 0]
         res = a * (1 / ((t + b) ** 2)) + c
         return res
 
     #curve fit on my data
-    ax: plt.Axes = plt.axes()
-    plt.scatter(dist, amp)
+    # ax: plt.Axes = plt.axes()
+    # plt.scatter(dist, amp,)
+    # fig = plt.figure(dpi=400)
+    fig = plt.figure()
     popt1, pcov1 = curve_fit(OnePartsTSquared, dist, amp, check_finite=False)
     x_fit = np.linspace(min(dist), max(dist), len(dist)*10)
-    plt.plot(x_fit, OnePartsTSquared(x_fit, *popt1))
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: str(x*1000)))
-    plt.ylabel("amplitude[m] 10^-3")
+    plt.plot(x_fit, OnePartsTSquared(x_fit, *popt1), zorder=0, linewidth=1)
+    # plt.plot(dist,amp, ".",zorder=1)
+    plt.errorbar(dist, amp, xerr=0.3, yerr=noiseAmp, fmt='none', ecolor="r", zorder=2, elinewidth=1)
+    # ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: str(x*1000)))
+    plt.ylabel("amplitude[m]")
+    plt.xlabel("distance from photodiode [cm]")
     # plt.yscale("symlog", linthresh=max(amp)*2)
-    print("real data:")
+    print("real data fitting:")
     print(pcov1)
     print(f"a: {popt1[0]}, b: {popt1[1]}, c: {popt1[2]}")
+    plt.savefig("distanceAnalysis.svg", bbox_inches='tight')
     plt.show()
 
 
 if __name__ == '__main__':
-    o = [openPickleFile(filename) for filename in os.listdir() if not (filename.endswith(".py") or filename.endswith(".jpg") or filename.endswith(".txt"))]
+    o = [openPickleFile(filename) for filename in os.listdir() if not (filename.endswith(".py") or filename.endswith(".svg") or filename.endswith(".jpg") or filename.endswith(".txt") or filename.endswith("noise_cover_led.pickle"))]
     o.sort(key=(lambda x: x["distance"]))
-    # drawAllMeasurements(o)
+    drawAllMeasurements(o)
     dist, amp = analizeDistEffect(o)
 
     # o = openPickleFile("noise_cover_led.pickle")
-    # openNoisePickle()
+    noiseMinValue, noiseMaxValue, noiseAmp = openNoisePickle()
     # print("hi")
 
-    # np.savetxt('amp.txt', amp)  # x,y,z equal sized 1D arrays
-    # np.savetxt('dist.txt', dist)  # x,y,z equal sized 1D arrays
+
     # demoFunction(dist,amp)
-    distFitting(dist, amp)
+    distFitting(dist, amp, noiseMinValue, noiseMaxValue, noiseAmp)
