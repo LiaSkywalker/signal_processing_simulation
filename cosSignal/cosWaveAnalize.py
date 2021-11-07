@@ -28,14 +28,14 @@ def plotData(obj):
         plt.plot(recived_data[6000:6300])
         # plt.ylabel("received")
         # plt.title("received cos signal")
-        plt.savefig("cos_received.svg")
+        plt.savefig("cos_received.svg", bbox_inches='tight')
         plt.show()
 
         # plot original data
         plt.plot(original_signal[6000:6300])
         # plt.ylabel("signal")
         # plt.title("original cos signal")
-        plt.savefig("cos_original.svg")
+        plt.savefig("cos_original.svg", bbox_inches='tight')
         plt.show()
 
 
@@ -49,14 +49,14 @@ def plotData(obj):
         plt.title("received signal fft")
         plt.xlabel("frequency[Hz]")
         plt.ylabel("magnitude")
-        plt.savefig("fft_received_cos.svg")
+        plt.savefig("fft_received_cos.svg", bbox_inches='tight')
         plt.show()
 
         plt.plot(frequencies[5550:5590], np.abs(sig_fft)[5550:5590], "r")
         plt.title("received signal fft")
         plt.xlabel("frequency[Hz]")
         plt.ylabel("magnitude")
-        plt.savefig("fft_received_cos_zomm_in.svg")
+        plt.savefig("fft_received_cos_zomm_in.svg", bbox_inches='tight')
         plt.show()
 
 

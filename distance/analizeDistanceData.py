@@ -22,8 +22,8 @@ def drawAllMeasurements(objectsLst):
 
     plt.xlabel("Sec")
     plt.ylabel("Amplitude")
+    plt.savefig("distanceAllMeasures.svg", bbox_inches='tight')
     plt.show()
-    plt.savefig("distanceAllMeasures.svg")
     # plt.savefig(f"distanceAllMeasures.jpg")
 
 
@@ -55,11 +55,12 @@ def openNoisePickle():
     minValue = np.min(objData)
     amp = ((max(objData) - min(objData)) / 2)  # amplitude
 
-    plt.plot(objData)
-    plt.plot(np.repeat(maxValue, len(objData)))
-    plt.plot(np.repeat(minValue, len(objData)))
-    ampVec = np.repeat(amp, len(objData))
-    plt.plot(ampVec)
+    plt.plot(objData[1000:2000])
+    plt.plot(np.repeat(maxValue, len(objData[1000:2000])))
+    plt.plot(np.repeat(minValue, len(objData[1000:2000])))
+    ampVec = np.repeat(amp, len(objData[1000:2000]))
+    # plt.plot(ampVec)
+    plt.savefig("noise.svg", bbox_inches='tight')
     plt.show()
     return minValue, maxValue, amp
 
@@ -102,12 +103,13 @@ def distFitting(dist, amp, noiseMinValue, noiseMaxValue, noiseAmp):
     # plt.plot(dist,amp, ".",zorder=1)
     plt.errorbar(dist, amp, xerr=0.3, yerr=noiseAmp, fmt='none', ecolor="r", zorder=2, elinewidth=1)
     # ax.yaxis.set_major_formatter(FuncFormatter(lambda x, y: str(x*1000)))
-    plt.ylabel("amplitude[m] 10^-3")
+    plt.ylabel("amplitude[m]")
+    plt.xlabel("distance from photodiode [cm]")
     # plt.yscale("symlog", linthresh=max(amp)*2)
     print("real data fitting:")
     print(pcov1)
     print(f"a: {popt1[0]}, b: {popt1[1]}, c: {popt1[2]}")
-    plt.savefig("distanceAnalysis.svg")
+    plt.savefig("distanceAnalysis.svg", bbox_inches='tight')
     plt.show()
 
 
