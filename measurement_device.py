@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pickle
 from scipy.io import wavfile
 import sounddevice as sd
-from simulation import simulate_rx, simulate_tx
+from simulation.simulation import simulate_rx, simulate_tx
 
 
 def turn_off_led():
@@ -50,6 +50,29 @@ def take_measurements(signal: np.ndarray, sampling_rate: float,offset=3.):
     turn_off_led()
     return vals
 
+def take_measurements2(duration: float, sampling_rate: float):
+    """
+
+    :param signal:
+    :param sampling_rate:
+    :return:
+    """
+    # if device not in system.devices:
+    #     vals = simulate_rx(simulate_tx(signal))
+    #     sleep(signal.size / sampling_rate)
+    #     return vals
+    with nidaqmx.Task() as rx:
+
+        # analog input channel
+        rx.ai_channels.add_ai_current_chan(device.name + "/ai0")
+        # rx.ai_channels.add_ai_current_chan(device.name + "/ai7")
+        rx.timing.cfg_samp_clk_timing(sampling_rate, sample_mode=AcquisitionType.CONTINUOUS)
+
+        #read data
+        vals = np.array(rx.read(round(duration*sampling_rate), 1.5*duration))
+    return vals
+
+
 
 def distance(x1):
     w = 570 #output frequency
@@ -58,7 +81,7 @@ def distance(x1):
     x0 = 20 # initial location of diode on axis
     dis = x1 - x0 #
     offset = 3
-    filename = f"distance/distance{dis}.pickle" #output filename
+    filename = f"measurments/distance/distance{dis}.pickle"  #output filename
     signal = np.sin(w * np.linspace(0, TimeInterval, TimeInterval * rate) * 2 * np.pi) / 2
     values = take_measurements(signal, rate, offset)
 
@@ -115,12 +138,12 @@ def play_song(filename):
     with sd.OutputStream(sample_rate, chunk_size, channels=1, dtype="float32", callback=callback):
         sd.sleep(1000 * data.size // sample_rate)
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # finding the connections of instruments
-    system = nidaqmx.system.System.local()
-    for dev in system.devices:
-        print(dev)
+system = nidaqmx.system.System.local()
+for dev in system.devices:
+    print(dev)
 
-    # select device
-    # device = system.devices["a"]
-    device = system.devices[input("write the device name to use: ")]
+# select device
+# device = system.devices["a"]
+device = system.devices[input("write the device name to use: ")]
