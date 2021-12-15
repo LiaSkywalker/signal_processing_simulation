@@ -4,7 +4,7 @@ import numpy as np
 import os
 import scipy.fft as fft
 
-plt.rcParams['text.usetex'] = True
+# plt.rcParams['text.usetex'] = True
 
 SHOW = False
 
@@ -82,9 +82,59 @@ def analyze2(filename):
     f_domain[0] = 0
     freq = fft.fftfreq(data['received'].size, 1 / data['rate'])[:data['received'].size // 2]
     idx = np.argmax(f_domain)
-    lim = np.digitize([39_600, 40_100], freq) - 1
+    lim = np.digitize([39_680, 39_900], freq) - 1
     plt.plot(freq[lim[0]:lim[1]], np.abs(f_domain[lim[0]:lim[1]]))
 
+
+SPEEDS = [0, 0.0367, 0.1064, -0.1064, -0.0367]
+DV = [0, 4e-4, 1e-3, 1e-3, 1e-4]
+
+
+def load_data(filename):
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+        if "speed" in data:
+            data["dv"] = DV[data['speed']]
+            data['speed'] = SPEEDS[data['speed']]
+    return data
+
+
+SAMPLE_COUNT = 250_000
+
+
+def analyze3(data):
+    data.sort(key=lambda x: x.get('speed'))
+    ref = next(d for d in data if d.get("speed") == 0)
+    freq = fft.fftfreq(SAMPLE_COUNT, 1 / ref['rate'])
+    lim = np.digitize([39_900, 39_950], freq[:freq.size // 2]) - 1
+    print("calculating fourier transform")
+    for i, d in enumerate(data):
+        print(i)
+        d['f_domain'] = np.abs(fft.fft(d['received'][-2 * SAMPLE_COUNT:-SAMPLE_COUNT]))
+        d['f_domain_sliced'] = d['f_domain'][lim[0]:lim[1]]
+    print("finish calculating FT")
+    print("calculating correlation")
+    for i, d in enumerate(data):
+        print(i)
+        d['correlation'] = np.correlate(ref['f_domain_sliced'], d['f_domain_sliced'], 'same')
+        # d['correlation'] = d['correlation'][d['correlation'].size//2-lim[2]:d['correlation'].size//2+lim[2]]
+        d['shift'] = np.argmax(d['correlation']) - d['correlation'].size // 2  # - lim[2]
+        if d['speed'] == SPEEDS[2]:
+            f = plt.figure()
+            plt.plot(freq[lim[0]:lim[1]], ref['f_domain_sliced'])
+            plt.plot(freq[lim[0]:lim[1]], d['f_domain_sliced'])
+            # plt.arrow(freq[np.argmax(d['f_domain_sliced'])], d['f_domain_sliced'].max(), d['shift']*freq[1], 0)
+            plt.xlabel(r"f $ \left[Hz\right] $")
+            plt.savefig("correlation.svg")
+            plt.close(f)
+    print("finish calculating correlation")
+    x = [d['speed'] for d in data]
+    dx = [d['dv'] for d in data]
+    y = [freq[-d['shift']] for d in data]
+    dy = 0.3 * freq[1]
+    plt.errorbar(x, y, dy, dx, ".")
+    plt.xlabel(r"Velocity $ \left[\frac{m}{s}\right] $")
+    plt.ylabel(r"$\Delta f \left[Hz\right] $")
 
 
 def plot(x, y, name, title, xlabel, ylabel):
@@ -96,12 +146,29 @@ def plot(x, y, name, title, xlabel, ylabel):
 
 
 if __name__ == '__main__':
-    for f in ["doppler_s-1mov'tr'_take1.pickle", "doppler_s0movtr.pickle", "doppler_s1mov'tr'_take1.pickle", "doppler_s2mov'tr'_take1.pickle"]:
-        analyze2(f)
-    plt.xlabel(r"$ f \left[Hz\right] $")
-    plt.yscale("log")
-    plt.legend(["-1","0","1","2"])
+    data = [load_data(filename) for filename in os.listdir() if
+            filename.endswith(".pickle") and not filename == "noise.pickle" and "take2" not in filename]
+    print("starting with transmitter")
+    analyze3([d for d in data if "moving part" in d and d['moving part'] == 'tr'])
+    plt.title("transmitter moving")
+    v = np.linspace(-0.11, 0.11, 200)
+    plt.plot(v, 40_000 * v / (v + 343))
+    plt.savefig("transmitter.svg")
     plt.show()
+    print("finish with transmitter")
+    # print("starting with receiver")
+    # analyze3([d for d in data if "moving part" in d and (d['moving part'] == 'rec' or d['speed'] == 0)])
+    # plt.title("receiver moving")
+    # plt.savefig("receiver.svg")
+    # plt.show()
+    # print("finish with receiver")
+    # for f in ["doppler_s-1mov'rec'_take1.pickle", "doppler_s0movtr.pickle", "doppler_s1mov'rec'_take1.pickle",
+    #           "doppler_s2mov'rec'_take1.pickle"]:
+    #     analyze2(f)
+    # plt.xlabel(r"$ f \left[Hz\right] $")
+    # plt.yscale("log")
+    # plt.legend(["-1", "0", "1", "2"])
+    # plt.show()
     # analyze(listdir()[2])
     # for file in (file for file in os.listdir() if file.endswith(".pickle") and not file == "noise.pickle"):
     #     analyze(file)
