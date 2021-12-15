@@ -106,7 +106,7 @@ def analyze3(data):
     data.sort(key=lambda x: x.get('speed'))
     ref = next(d for d in data if d.get("speed") == 0)
     freq = fft.fftfreq(SAMPLE_COUNT, 1 / ref['rate'])
-    lim = np.digitize([39_900, 39_950], freq[:freq.size // 2]) - 1
+    lim = np.digitize([39_975, 40_025], freq[:freq.size // 2]) - 1
     print("calculating fourier transform")
     for i, d in enumerate(data):
         print(i)
@@ -148,20 +148,20 @@ def plot(x, y, name, title, xlabel, ylabel):
 if __name__ == '__main__':
     data = [load_data(filename) for filename in os.listdir() if
             filename.endswith(".pickle") and not filename == "noise.pickle" and "take2" not in filename]
-    print("starting with transmitter")
-    analyze3([d for d in data if "moving part" in d and d['moving part'] == 'tr'])
-    plt.title("transmitter moving")
-    v = np.linspace(-0.11, 0.11, 200)
-    plt.plot(v, 40_000 * v / (v + 343))
-    plt.savefig("transmitter.svg")
-    plt.show()
-    print("finish with transmitter")
-    # print("starting with receiver")
-    # analyze3([d for d in data if "moving part" in d and (d['moving part'] == 'rec' or d['speed'] == 0)])
-    # plt.title("receiver moving")
-    # plt.savefig("receiver.svg")
+    # print("starting with transmitter")
+    # analyze3([d for d in data if "moving part" in d and d['moving part'] == 'tr'])
+    # plt.title("transmitter moving")
+    # v = np.linspace(-0.11, 0.11, 200)
+    # plt.plot(v, 40_000 * v / (v + 343))
+    # plt.savefig("transmitter.svg")
     # plt.show()
-    # print("finish with receiver")
+    # print("finish with transmitter")
+    print("starting with receiver")
+    analyze3([d for d in data if "moving part" in d and (d['moving part'] == 'rec' or d['speed'] == 0)])
+    plt.title("receiver moving")
+    plt.savefig("receiver.svg")
+    plt.show()
+    print("finish with receiver")
     # for f in ["doppler_s-1mov'rec'_take1.pickle", "doppler_s0movtr.pickle", "doppler_s1mov'rec'_take1.pickle",
     #           "doppler_s2mov'rec'_take1.pickle"]:
     #     analyze2(f)
