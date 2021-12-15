@@ -1,3 +1,5 @@
+from os import listdir
+
 import numpy as np
 from time import time
 import matplotlib.pyplot as plt
@@ -9,29 +11,33 @@ from scipy.fft import fft, ifft
 
 def openPickleFile(openfile):
     with open(openfile, "rb") as file:
-        object = pickle.load(file)
-        object["filename"] = openfile
-    return object
+        obj = pickle.load(file)
+        obj["filename"] = openfile[:-7]
+    return obj
 
 
 def plotData(obj):
     # read data from pickle obj
     recived_data = obj.get("received")
-    original_signal = obj.get("signal")
+    sent_signal = obj.get("signal")
     recived_rate = obj.get("rate")
     recived_interval = obj.get("interval")
     recived_data_frequency = obj.get("data freq")
     recived_data_amp = obj.get("data amp")
     recived_offset = obj.get("tx_offset")
-    tine_line = obj.get("tine line")
-    filename = obj.get("filename")[:-7]
+    time_line = obj.get("time line")
+    filename = obj.get("filename")
 
-    ## plot received data ##
-    plt.plot(recived_data[300:400])
-    plt.ylabel("amplitude [V]")
-    plt.title("received signal")
-    plt.savefig(f"{filename}_recived.svg", bbox_inches='tight')
-    plt.show()
+    # plot received data #
+    fig, axs = plt.subplots(2, 1, sharex=True)
+    axs[0].plot(time_line[300:400], recived_data[300:400])
+    axs[1].plot(time_line[300:400], sent_signal[300:400])
+    axs[1].set_xlabel(r"time $ \left[s\right] $")
+    axs[0].set_ylabel(r"amplitude $ \left[V\right] $")
+    axs[1].set_ylabel(r"amplitude $ \left[V\right] $")
+    fig.suptitle("received signal")
+    # fig.savefig(f"{filename}_recived.svg", bbox_inches='tight')
+    fig.show()
 
     show_fft(recived_data, recived_interval, filename)
 
@@ -80,5 +86,6 @@ if __name__ == '__main__':
     #     "noise_cover_led.pickle") or filename.endswith(".svg"))]
     # for obj in o:
     #     plotData(obj)
-
     plotData(openPickleFile("nyquist_fr12111rate20000d0.02.pickle"))
+    # for f in (f in listdir() if f.endswith(".pickle")):
+    #     plotData(openPickleFile(f))
